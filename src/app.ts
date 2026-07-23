@@ -18,33 +18,13 @@ dotenv.config();
 
 const app = express();
 
-// Trust proxy in production (Vercel / Render reverse proxy)
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1);
-}
+// Trust proxy for Render/Vercel reverse proxies
+app.set('trust proxy', true);
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or same-origin)
-      if (!origin) return callback(null, true);
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-      ].filter(Boolean) as string[];
-
-      // In production on Vercel, allow any *.vercel.app domain if process.env.VERCEL is present or origin matches VERCEL_URL
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith('.vercel.app') ||
-        process.env.NODE_ENV !== 'production'
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Permissive CORS for seamless deployment
-    },
+    origin: true,
     credentials: true,
   })
 );
@@ -60,7 +40,11 @@ try {
   // Ignore in serverless if directory doesn't exist
 }
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  validate: { trustProxy: false },
+});
 app.use('/api', limiter);
 
 app.get('/', (_req, res) => {
