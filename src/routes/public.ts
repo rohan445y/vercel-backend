@@ -6,7 +6,31 @@ import { getSettings } from '../services/settingsService';
 const router = Router();
 
 router.get('/plans', async (_req, res) => {
-  const plans = await Plan.find({ isActive: true }).sort({ sortOrder: 1 });
+  let plans = await Plan.find({ isActive: true }).sort({ sortOrder: 1 });
+  if (plans.length === 0) {
+    try {
+      await Plan.insertMany([
+        {
+          name: 'SILVER', slug: 'silver', price: 300, commission: 40, duration: 30,
+          benefits: ['Basic Dashboard', 'Referral Income', 'Wallet', 'Withdraw', 'Support'],
+          color: '#6366F1', sortOrder: 1, isActive: true,
+        },
+        {
+          name: 'GOLD', slug: 'gold', price: 800, commission: 55, duration: 30,
+          benefits: ['Everything in Silver', 'Higher Referral Commission', 'Priority Support', 'Extra Bonus'],
+          badge: 'Gold', color: '#8B5CF6', sortOrder: 2, isActive: true,
+        },
+        {
+          name: 'DIAMOND', slug: 'diamond', price: 1500, commission: 65, duration: 30,
+          benefits: ['Everything', 'Highest Referral Commission', 'Diamond Badge', 'Fast Withdraw', 'Exclusive Rewards'],
+          badge: 'Diamond', color: '#EC4899', sortOrder: 3, isActive: true,
+        },
+      ]);
+      plans = await Plan.find({ isActive: true }).sort({ sortOrder: 1 });
+    } catch {
+      // Ignore insert error if concurrent request inserted
+    }
+  }
   return sendResponse(res, 200, 'Plans fetched', { plans });
 });
 
