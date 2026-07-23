@@ -63,6 +63,17 @@ try {
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
 app.use('/api', limiter);
 
+app.get('/', (_req, res) => {
+  res.json({
+    success: true,
+    message: 'KARMA API root is reachable. Use /api/health to check service status.',
+  });
+});
+
+app.get('/api', (_req, res) => {
+  res.json({ success: true, message: 'KARMA API is running' });
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'KARMA API is running' });
 });
